@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>48 h après l'attaque</title>
+<meta name="description" content="Histoire interactive de cybersécurité – Technologie 3e, séquence 6, activité 3.">
+<style>
+:root{
+  --bg:#eef3f8; --panel:#ffffff; --ink:#1b2430; --muted:#5b6878; --line:#d5dee8;
+  --brand:#1f6feb; --brand-soft:#e3eeff;
+  --good:#1a7f37; --good-soft:#e2f6e7; --bad:#c62828; --bad-soft:#fdecec; --mid:#b26a00; --mid-soft:#fff3dc;
+  --device:#111827; --bubble:#f1f4f8; --bubble-me:#1f6feb;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+button{font:inherit;cursor:pointer}
+.app{max-width:1100px;margin:0 auto;padding:16px}
+header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.logo{font-weight:800;font-size:1.25rem;letter-spacing:-.01em;user-select:none;cursor:default}
+.logo span{color:var(--brand)}
+.gauges{display:flex;gap:12px;margin-left:auto;flex-wrap:wrap}
+.gauge{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 8px;display:flex;align-items:center;gap:8px;font-size:.88rem}
+.gauge .bar{width:90px;height:9px;border-radius:9px;background:#e4e9ef;overflow:hidden}
+.gauge .fill{height:100%;border-radius:9px;transition:width .6s ease,background .6s}
+.map{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.map .step{flex:1 1 120px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.82rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+.map .step.cur{border-color:var(--brand);color:var(--brand);font-weight:700;background:var(--brand-soft)}
+.map .step.ok{color:var(--good)}
+.stage{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:820px){.stage{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:0 2px 10px rgba(20,40,80,.05)}
+.kicker{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--brand);font-weight:700;margin-bottom:4px}
+h1{font-size:1.6rem;line-height:1.2;margin:.1em 0 .4em}
+h2{font-size:1.25rem;margin:.2em 0 .5em}
+.narr p{margin:.45em 0}
+.q{font-weight:700;margin:14px 0 10px}
+.choices{display:flex;flex-direction:column;gap:9px}
+.choice{text-align:left;background:#f7f9fc;border:2px solid var(--line);border-radius:12px;padding:11px 14px;transition:border-color .15s,transform .1s}
+.choice:hover{border-color:var(--brand);transform:translateX(2px)}
+.choice b{color:var(--brand);margin-right:6px}
+.btn{background:var(--brand);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-weight:700}
+.btn.ghost{background:transparent;color:var(--brand);border:2px solid var(--brand)}
+.btn.small{padding:6px 12px;font-size:.88rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+
+/* Appareils */
+.device{background:var(--device);border-radius:28px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.screen{background:#fff;border-radius:18px;overflow:hidden;min-height:200px}
+.sbar{display:flex;justify-content:space-between;font-size:.75rem;color:#555;padding:6px 14px;background:#f5f5f7}
+.apphead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #eee;font-weight:700}
+.chat{padding:12px;display:flex;flex-direction:column;gap:8px;background:#fafbfd}
+.msg{max-width:82%;padding:8px 12px;border-radius:14px;background:var(--bubble);font-size:.93rem}
+.msg .who{font-size:.72rem;font-weight:700;color:var(--brand);display:block}
+.msg.me{align-self:flex-end;background:var(--bubble-me);color:#fff}
+.msg.me .who{color:#d6e6ff}
+.msg .react{display:block;font-size:.8rem;margin-top:3px}
+.blur{display:block;margin:6px 0;padding:18px 8px;border-radius:10px;background:repeating-linear-gradient(45deg,#d9dee6,#d9dee6 8px,#e7ebf1 8px,#e7ebf1 16px);color:#555;font-size:.8rem;text-align:center}
+.browser .addr{display:flex;align-items:center;gap:8px;margin:8px;padding:7px 12px;border-radius:999px;background:#f1f3f6;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;word-break:break-all}
+.addr .lock{font-size:1rem}
+.addr.unsafe{background:#fdecec;color:#9b1c1c}
+.page{padding:10px 16px 16px}
+.page .fake-in{border:1px solid #ccd;border-radius:6px;padding:6px 8px;margin:4px 0;color:#999;font-size:.88rem}
+.notif{margin:14px;padding:12px 14px;border-radius:14px;background:#f3f5f9;border:1px solid #e1e5ec;display:flex;gap:10px}
+.notif .ic{font-size:1.6rem}
+.notif .t{font-weight:700}
+.notif .s{font-size:.9rem;color:#444}
+.mail{padding:12px 16px;font-size:.93rem}
+.mail .meta{border-bottom:1px solid #eee;padding-bottom:8px;margin-bottom:8px;font-size:.88rem}
+.post{padding:12px}
+.post .ph{height:140px;border-radius:12px;background:linear-gradient(160deg,#7dc4ff,#ffd38a);display:flex;align-items:flex-end;padding:10px;color:#fff;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.post .cap{margin-top:8px;font-size:.92rem}
+.tag{display:inline-block;background:#eef2ff;color:#3346a8;border-radius:6px;padding:1px 6px;font-size:.8rem;margin:2px 2px 0 0}
+.banner{margin:10px;border-radius:12px;border:1px solid #ddd;padding:12px;background:#fff;box-shadow:0 -4px 16px rgba(0,0,0,.08);font-size:.88rem}
+.banner .bb{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.banner .bb span{padding:6px 10px;border-radius:8px;border:1px solid #ccc;font-size:.82rem}
+.banner .bb .big{background:#18a058;color:#fff;border-color:#18a058;font-weight:700;padding:8px 18px}
+.banner .bb .tiny{border:0;color:#999;text-decoration:underline;font-size:.72rem}
+
+/* Schémas HTTP / HTTPS */
+.schema{display:grid;grid-template-columns:70px 1fr 70px;align-items:center;gap:6px;padding:10px;border:1px dashed var(--line);border-radius:12px;margin:8px 0;font-size:.82rem;text-align:center}
+.schema .arrows div{margin:3px 0}
+.schema .red{color:var(--bad);font-weight:700}
+
+/* Mini-jeux */
+.sortlist{display:flex;flex-direction:column;gap:8px}
+.sortitem{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f7f9fc;border:2px solid var(--line);border-radius:12px;padding:8px 12px}
+.sortitem .lbl{flex:1 1 200px}
+.sortitem .opts{display:flex;gap:6px}
+.pill{border:2px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-size:.88rem}
+.pill.on{border-color:var(--brand);background:var(--brand);color:#fff}
+.sortitem.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.sortitem.right{border-color:var(--good);background:var(--good-soft)}
+.multi .choice.on{border-color:var(--brand);background:var(--brand-soft)}
+.multi .choice.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.multi .choice.right{border-color:var(--good);background:var(--good-soft)}
+.clue{border-bottom:2px dotted #b9c2cf;cursor:pointer;border-radius:3px}
+.clue.found{background:#ffe08a;border-bottom-color:transparent}
+.counter{font-weight:700;color:var(--brand)}
+
+/* Retour */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.fb{max-width:620px;width:100%;border-radius:var(--radius);padding:22px 24px;background:var(--panel);border-top:8px solid var(--good);animation:pop .25s ease}
+.fb.bad{border-top-color:var(--bad)} .fb.mid{border-top-color:var(--mid)}
+.fb h3{margin:.1em 0 .4em;font-size:1.25rem}
+.fb.good h3{color:var(--good)} .fb.bad h3{color:var(--bad)} .fb.mid h3{color:var(--mid)}
+.delta{font-size:.85rem;color:var(--muted);margin-top:6px}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
+.note{margin-top:14px;padding:10px 14px;border-radius:12px;background:#fff8e1;border:2px dashed #e0b400;font-size:.95rem}
+.note b{color:#7a5a00}
+.copy{font-size:1.05rem;line-height:1.45}
+.memo{background:var(--brand-soft);border-radius:12px;padding:12px 16px;margin-top:10px}
+.memo li{margin:4px 0}
+.code{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.4rem;font-weight:800;letter-spacing:.15em;background:#111827;color:#ffd84d;padding:6px 16px;border-radius:10px;margin:6px 0}
+.tip{font-size:.85rem;color:var(--muted)}
+.help{position:fixed;right:16px;bottom:16px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:.85rem;color:var(--muted);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.prof{border:2px solid #7c3aed;background:#f5f0ff}
+.prof .choice{border-color:#d9c9ff}
+.end-codes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.end-codes div{background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.85rem}
+.end-codes b{font-family:ui-monospace,Menlo,Consolas,monospace;display:block;font-size:1rem}
+.slots{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.slot{border:2px solid var(--line);border-radius:12px;padding:10px 14px;background:#f7f9fc}
+.slot.open{border-color:var(--good);background:var(--good-soft)}
+.slot-in{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.slot-in input{flex:1 1 160px;font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-transform:uppercase;padding:8px 12px;border:2px solid var(--line);border-radius:10px}
+.slot-in input:focus{outline:none;border-color:var(--brand)}
+.slot-c{margin-top:6px;font-size:.95rem}
+.slot-msg{font-size:.85rem;color:var(--bad);margin-top:4px;min-height:1em}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}
+.flash{animation:flash 1s}
+@keyframes flash{from{box-shadow:0 0 0 6px rgba(26,127,55,.35)}to{box-shadow:none}}
+.locks{display:flex;justify-content:center;gap:10px;font-size:2.2rem;margin:10px 0}
+.locks span{filter:grayscale(1);opacity:.5;transition:all .4s}.locks span.on{filter:none;opacity:1}
+.story li{margin:6px 0}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="logo" id="logo" title="48 h après l'attaque">🛡️ 48 h <span>après l'attaque</span></div>
+    <div class="gauges" id="gauges"></div>
+    <button class="btn ghost small" id="carnet" title="Revoir les infos déjà notées">📒 Mes notes</button>
+  </header>
+  <nav class="map" id="map"></nav>
+  <main id="main"></main>
+</div>
+<div class="help">📝 = recopiez l'info sur votre fiche</div>
+<div id="overlay"></div>
+
+<script>
+/* =========================================================
+   48 h après l'attaque — Technologie 3e, séquence 6, activité 3
+   Histoire à choix : Claude, élève de 3e, témoin de 48 h de
+   vie numérique après la cyberattaque du collège.
+   ========================================================= */
+
+/* ---------- Petits composants d'écran ---------- */
+const phone = (head, inner) => `<div class="device"><div class="screen"><div class="sbar"><span>18:42</span><span>📶 🔋</span></div>${head?`<div class="apphead">${head}</div>`:''}${inner}</div></div>`;
+const chat = (head, msgs) => phone(head, `<div class="chat">${msgs.map(m=>`<div class="msg ${m.me?'me':''}"><span class="who">${m.from}</span>${m.text}${m.react?`<span class="react">${m.react}</span>`:''}</div>`).join('')}</div>`);
+const browser = (url, secure, body) => phone('', `<div class="browser"><div class="addr ${secure?'':'unsafe'}"><span class="lock">${secure?'🔒':'⚠️'}</span>${url}</div><div class="page">${body}</div></div>`);
+const notif = (head, ic, t, s) => phone(head, `<div class="notif"><div class="ic">${ic}</div><div><div class="t">${t}</div><div class="s">${s}</div></div></div>`);
+const mail = (from, subj, body) => phone('✉️ Messagerie', `<div class="mail"><div class="meta"><b>De :</b> ${from}<br><b>Objet :</b> ${subj}</div>${body}</div>`);
+
+/* ---------- Contenu de l'histoire ---------- */
+const CHAPTERS = [
+{
+  id:'c1', icon:'💻', title:'Le PC de la maison', code:'VIGILE', box:'Clé 1', piece:'La porte d\'entrée', clue:'Le logiciel du site du collège n\'avait pas été <b>mis à jour</b> depuis deux ans. Les pirates ont utilisé une <b>faille connue</b> pour entrer, et aucun <b>pare-feu</b> ne filtrait les connexions vers le serveur.',
+  scenes:[
+  { type:'info', kicker:'Lundi, 8 h 05',
+    title:'Le collège est attaqué',
+    text:`<p>En arrivant au collège, tout le monde ne parle que de ça : le <b>site web du collège ne fonctionne plus</b> et plusieurs <b>comptes ENT</b> d'élèves et de professeurs ont été piratés.</p>
+<p>En technologie, le professeur lance un défi aux 3<sup>e</sup> : <i>« Pendant 48 h, observez vos propres habitudes numériques. Si nous comprenons nos erreurs, nous comprendrons comment l'attaque a réussi. »</i></p>
+<p>Tu es <b>Claude</b>, élève de 3<sup>e</sup>. À chaque situation, vous décidez <b>à deux</b> de ce que fait Claude.</p>
+<p class="tip">Une erreur ? Pas de panique : vous pourrez <b>remonter le temps</b>. Mais vos jauges 🛡️ Sécurité et 🔒 Vie privée en garderont la trace.</p>`,
+    device: notif('🏫 ENT du collège','🚨','Service indisponible','Suite à un incident de sécurité, l\'ENT est temporairement fermé. Ne communiquez jamais votre mot de passe.') },
+  { type:'choice', kicker:'Lundi, 17 h 30',
+    text:`<p>De retour à la maison, Claude veut installer <b>MegaKart</b>, le jeu dont tout le monde parle. Une recherche donne deux résultats…</p>`,
+    device: browser('moteur-de-recherche.fr/?q=megakart', true, `<p><b>MegaKart – Télécharger GRATUIT version complète crack 2026</b><br><span style="color:#1a7f37;font-size:.85rem">megakart-free-full.xyz</span><br><span style="font-size:.85rem">Toutes les voitures débloquées !!! Sans inscription.</span></p><p><b>MegaKart – Store officiel de l'éditeur</b><br><span style="color:#1a7f37;font-size:.85rem">store.megakart-games.com</span><br><span style="font-size:.85rem">Version gratuite. Achats facultatifs.</span></p>`),
+    q:'Où Claude télécharge-t-il le jeu ?',
+    choices:[
+      {t:'Sur megakart-free-full.xyz : tout est débloqué, c\'est mieux !', ok:'bad', sec:-15,
+       fb:'Le fichier contenait un <b>cheval de Troie</b>. Le PC devient lent, des publicités s\'ouvrent toutes seules et un logiciel espion enregistre ce que Claude tape au clavier… y compris ses mots de passe.'},
+      {t:'Sur le store officiel de l\'éditeur.', ok:'good', sec:+10,
+       fb:'Bon réflexe ! Les logiciels se téléchargent <b>uniquement depuis les sites officiels</b>. Les versions « crackées » sont un moyen classique de cacher des virus.'}
+    ]},
+  { type:'choice', kicker:'Lundi, 18 h 10',
+    text:`<p>Au moment de lancer le jeu, une fenêtre s'affiche.</p>`,
+    device: notif('⚙️ Système','🔄','Mise à jour disponible','Cette mise à jour corrige 12 failles de sécurité. Le redémarrage prendra environ 5 minutes.'),
+    q:'Que fait Claude ?',
+    choices:[
+      {t:'« Me le rappeler dans 3 semaines. » Claude veut jouer tout de suite.', ok:'bad', sec:-15,
+       fb:'Les failles sont désormais <b>publiques</b> : les pirates savent exactement comment entrer dans les ordinateurs qui ne sont pas à jour. D\'ailleurs, d\'après le professeur, le site du collège utilisait un logiciel qui n\'avait pas été mis à jour depuis deux ans…'},
+      {t:'« Installer maintenant. » Le jeu attendra 5 minutes.', ok:'good', sec:+10,
+       fb:'Exact : <b>mettre à jour</b> son système et ses logiciels permet de <b>corriger les failles de sécurité</b> avant que les pirates ne les utilisent.', note:'1A'}
+    ]},
+  { type:'choice', kicker:'Lundi, 19 h 00',
+    text:`<p>Théo, le cousin de Claude, passe à la maison et jette un œil au PC.</p>`,
+    device: chat('👦 Théo (en vrai, à côté de Claude)',[{from:'Théo',text:'Franchement, désactive ton antivirus, il ralentit tout.'},{from:'Théo',text:'De toute façon tu fais que des jeux en ligne, tu risques rien 🤷'}]),
+    q:'Théo a-t-il raison ?',
+    choices:[
+      {t:'Oui : Claude désactive l\'antivirus pour gagner quelques images par seconde.', ok:'bad', sec:-15,
+       fb:'Les jeux en ligne sont au contraire une <b>cible fréquente</b> : faux mods, liens dans les discussions, pièces jointes… Sans antivirus, plus personne ne contrôle les fichiers qui entrent sur le PC.'},
+      {t:'Non : Claude garde l\'antivirus activé.', ok:'good', sec:+10,
+       fb:'Bonne décision : même si on n\'utilise que des jeux en ligne, <b>l\'antivirus reste indispensable</b>.', note:'1B'}
+    ]},
+  { type:'sort', kicker:'Lundi, 20 h 30 – Mission « Gardien du bâtiment »',
+    text:`<p>Pour comprendre, le professeur a donné une image : un ordinateur, c'est comme un <b>grand bâtiment public</b>.</p>
+<ul><li>🔐 Le <b>pare-feu</b>, ce sont les <b>cadenas sur les portes</b> : il <b>filtre les connexions</b> qui entrent et qui sortent par le réseau.</li>
+<li>👮 L'<b>antivirus</b>, ce sont les <b>vigiles</b> : ils <b>repèrent et bloquent les programmes malveillants</b> (virus, logiciels espions…).</li></ul>
+<p>Cette nuit, quatre menaces arrivent. Qui doit intervenir ?</p>`,
+    device: phone('🏢 Le bâtiment « PC de Claude »', `<div style="padding:16px;text-align:center;font-size:3rem;line-height:1.3">🏢<br><span style="font-size:1.6rem">🔐 🚪 🔐 &nbsp; 👮 👮</span><p style="font-size:.85rem;color:#555">Portes = connexions réseau<br>Visiteurs = fichiers et programmes</p></div>`),
+    cats:['🔐 Pare-feu','👮 Antivirus'],
+    items:[
+      {t:'Un ordinateur inconnu, à l\'autre bout du monde, essaie de se connecter au PC.', a:0},
+      {t:'La pièce jointe « facture.pdf.exe » contient un virus.', a:1},
+      {t:'Un logiciel espion caché dans un faux jeu vient d\'être copié sur le disque.', a:1},
+      {t:'Une application essaie d\'ouvrir une connexion vers un serveur non autorisé.', a:0}
+    ],
+    good:'Parfait ! Le <b>pare-feu</b> surveille les <b>connexions</b> (les portes), l\'<b>antivirus</b> surveille les <b>fichiers et programmes</b> (les visiteurs). Il faut <b>les deux</b> : ils ne protègent pas contre les mêmes menaces.', note:'1C', sec:+10 }
+  ],
+  recap:['Télécharger uniquement sur les sites officiels.','Faire les mises à jour dès qu\'elles sont proposées : elles corrigent des failles.','Antivirus = vigiles qui bloquent les programmes malveillants.','Pare-feu = cadenas qui filtrent les connexions entrantes et sortantes.']
+},
+{
+  id:'c2', icon:'📸', title:'La story de vacances', code:'TRACES', box:'Clé 2', piece:'La récolte d\'informations', clue:'Avant d\'attaquer, les pirates ont fouillé les <b>traces</b> laissées en ligne : dates de naissance, prénoms, noms d\'animaux… De quoi deviner des mots de passe trop simples.',
+  scenes:[
+  { type:'choice', kicker:'Lundi, 21 h 15',
+    text:`<p>Claude trie ses photos de vacances et prépare une publication sur <b>InstaPix</b>. Le compte est <b>public</b>, avec 1 200 abonnés… dont beaucoup que Claude ne connaît pas vraiment.</p>`,
+    device: phone('📸 InstaPix – Nouvelle publication', `<div class="post"><div class="ph">📍 12 rue des Lilas</div><div class="cap">Devant chez nous 🏡 On repart demain 2 semaines au ski !!! ⛷️<br><span class="tag">📍 Localisation activée</span><span class="tag">🌍 Public</span></div></div>`),
+    q:'Que fait Claude ?',
+    choices:[
+      {t:'Publier tel quel : c\'est juste une photo de vacances.', ok:'bad', priv:-15,
+       fb:'Cette photo dit à 1 200 personnes <b>où habite Claude</b> et <b>quand la maison sera vide</b>. C\'est une <b>trace volontaire</b> : c\'est Claude qui a décidé de la publier… et elle peut rester en ligne pour toujours.'},
+      {t:'Retirer l\'adresse et la date de départ, désactiver la localisation et publier pour les amis proches seulement.', ok:'good', priv:+10,
+       fb:'Bien joué. Ce que l\'on publie soi-même, ce sont des <b>traces volontaires</b>. Avant de publier, on se demande : <i>« Qui va voir ça ? Qu\'est-ce que ça révèle sur moi ? »</i>', note:'2A'}
+    ]},
+  { type:'choice', kicker:'Lundi, 22 h 40',
+    text:`<p>Nolan, un ami, publie une photo de groupe prise à une fête. Il a <b>identifié Claude</b> sans le prévenir et a ajouté un commentaire.</p>`,
+    device: phone('📸 InstaPix – Nolan', `<div class="post"><div class="ph">🎉 Soirée chez Lina</div><div class="cap"><b>Nolan</b> : Regardez la tête de <span class="tag">@claude_3B</span> 😂😂 à 2 h du mat'<br><span class="tag">🌍 Public</span> <span class="tag">48 j'aime</span></div></div>`),
+    q:'Que fait Claude ?',
+    choices:[
+      {t:'Rien. Ce n\'est pas Claude qui a publié, donc ce n\'est pas son problème.', ok:'bad', priv:-15,
+       fb:'Pourtant, cette publication parle de Claude ! Ce que les <b>autres publient sur nous</b> fait aussi partie de notre identité numérique. C\'est une <b>trace involontaire</b> : Claude ne l\'a pas choisie.'},
+      {t:'Demander gentiment à Nolan de retirer l\'identification, puis régler son compte pour valider les identifications avant qu\'elles apparaissent.', ok:'good', priv:+10,
+       fb:'Excellent. Les <b>publications et commentaires des amis</b> laissent des traces sur nous <b>sans notre accord</b> : ce sont des <b>traces involontaires</b>. On peut demander leur retrait et régler ses paramètres.', note:'2B'}
+    ]},
+  { type:'sort', kicker:'Mardi, 7 h 20 – Mission « Ce qu\'InstaPix sait de toi »',
+    text:`<p>En lisant les conditions d'utilisation, Claude découvre la page <b>« Tes données »</b>. Certaines informations, Claude les a données <b>volontairement</b>. D'autres ont été enregistrées <b>sans s'en rendre compte</b>.</p><p>Classez chaque information.</p>`,
+    device: phone('📸 InstaPix – Tes données', `<div class="page" style="font-size:.88rem"><p><b>Fichier de données – claude_3B</b></p><p>📅 Date de naissance<br>🖼️ 347 photos publiées<br>🌐 Adresse IP : 86.214.xx.xx<br>📍 Positions GPS<br>⏱️ Pages vues, temps passé<br>💬 Mentions par d'autres comptes<br>✍️ Commentaires écrits</p></div>`),
+    cats:['✋ Volontaire','👻 Involontaire'],
+    items:[
+      {t:'La date de naissance saisie à l\'inscription', a:0},
+      {t:'Les photos que Claude a publiées', a:0},
+      {t:'L\'adresse IP de la box internet', a:1},
+      {t:'La localisation enregistrée par le téléphone', a:1},
+      {t:'Les pages visitées et le temps passé sur chacune', a:1},
+      {t:'Les commentaires que Claude a écrits', a:0},
+      {t:'Un commentaire de Nolan qui mentionne Claude', a:1}
+    ],
+    good:'Bravo ! <b>Traces volontaires</b> : ce que l\'on publie soi-même (photos, commentaires, date de naissance…). <b>Traces involontaires</b> : ce qui est enregistré sans qu\'on s\'en rende compte (adresse IP, localisation, données de connexion, pages visitées, publications des autres…).', priv:+10 },
+  { type:'choice', kicker:'Mardi, 7 h 35',
+    text:`<p>La montre connectée de Claude synchronise ses données : rythme cardiaque, trajets, heures de sommeil. Théo affirme : <i>« Une montre, ça ne peut pas être piraté, c'est pas un ordi. »</i></p>`,
+    device: notif('⌚ Montre connectée','❤️','Synchronisation terminée','Trajet domicile → collège enregistré. Fréquence cardiaque : 72 bpm.'),
+    q:'Vrai ou faux ?',
+    choices:[
+      {t:'Vrai : seuls les ordinateurs peuvent subir des cyberattaques.', ok:'bad', sec:-10,
+       fb:'Faux ! <b>Smartphones, montres, caméras, consoles</b>… tous les objets connectés à Internet peuvent être attaqués. Et ici, la montre connaît même le trajet quotidien de Claude.'},
+      {t:'Faux : tout objet connecté à Internet peut être attaqué.', ok:'good', sec:+10,
+       fb:'Exact. Un objet connecté est un petit ordinateur relié au réseau : il faut le <b>mettre à jour</b>, changer son <b>mot de passe par défaut</b> et limiter les données partagées.'}
+    ]}
+  ],
+  recap:['Trace volontaire : information que je publie moi-même (photo, commentaire, date de naissance).','Trace involontaire : information enregistrée sans que je m\'en rende compte (adresse IP, localisation, pages visitées, publications des autres).','Avant de publier : « Qui va voir ça ? Qu\'est-ce que ça révèle ? »','Tous les objets connectés peuvent être piratés.']
+},
+{
+  id:'c3', icon:'🍪', title:'Le bandeau de cookies', code:'CONSENTEMENT', box:'Clé 3', piece:'La liste d\'adresses', clue:'Des adresses mail d\'élèves avaient été données à des sites de quiz sans lire les conditions. Ces données, collectées <b>sans vrai consentement</b>, ont été revendues aux pirates.',
+  scenes:[
+  { type:'choice', kicker:'Mardi, 12 h 50 – à la cantine',
+    text:`<p>Lina envoie un lien à Claude : <i>« Fais ce quiz, c'est trop drôle : Quel personnage de série es-tu ? »</i>. Dès l'ouverture du site, un bandeau apparaît.</p>`,
+    device: browser('https://www.quelpersoestu.com', true, `<p style="font-size:1.1rem;font-weight:800">🎬 Quel perso es-tu ?</p><p style="color:#999">Chargement du quiz…</p><div class="banner">🍪 <b>Nous respectons votre vie privée.</b> Nous et nos <b>247 partenaires</b> utilisons des cookies pour personnaliser la publicité et analyser votre navigation.<div class="bb"><span class="big">TOUT ACCEPTER</span><span>Paramétrer</span><span class="tiny">Continuer sans accepter</span></div></div>`),
+    q:'Que fait Claude ?',
+    choices:[
+      {t:'Clic sur « TOUT ACCEPTER » : c\'est le gros bouton vert, ça va plus vite.', ok:'bad', priv:-15,
+       fb:'Claude vient d\'autoriser <b>247 entreprises</b> à suivre sa navigation pour lui envoyer de la publicité ciblée. Le site a tout fait pour que ce bouton attire l\'œil… alors que le <b>RGPD</b> exige que <b>refuser soit aussi simple qu\'accepter</b>.'},
+      {t:'Clic sur « Continuer sans accepter » ou « Paramétrer » pour refuser les cookies publicitaires.', ok:'good', priv:+10,
+       fb:'Bon réflexe. Grâce au <b>RGPD</b>, un site doit obtenir ton <b>consentement</b> avant de collecter ou d\'utiliser tes données. Tu as le droit de <b>refuser</b>.', note:'3A'}
+    ]},
+  { type:'choice', kicker:'Mardi, 12 h 58',
+    text:`<p>Le quiz est terminé ! Mais pour afficher le résultat, le site demande…</p>`,
+    device: browser('https://www.quelpersoestu.com/resultat', true, `<p><b>Ton résultat est prêt ! 🎉</b><br>Pour le recevoir, complète ton profil :</p><div class="fake-in">Nom et prénom</div><div class="fake-in">Adresse postale</div><div class="fake-in">Numéro de téléphone</div><div class="fake-in">Métier de tes parents</div><div class="fake-in">Nom de ton collège</div>`),
+    q:'Que fait Claude ?',
+    choices:[
+      {t:'Tout remplir : Claude veut vraiment connaître son résultat.', ok:'bad', priv:-15,
+       fb:'Pour un simple quiz, le site n\'a <b>aucune raison</b> de connaître ton adresse ou le métier de tes parents. Ces données vont être revendues ou utilisées pour te cibler. Le RGPD impose de ne collecter <b>que les données nécessaires</b>.'},
+      {t:'Fermer le site : ces informations n\'ont rien à voir avec un quiz.', ok:'good', priv:+10,
+       fb:'Exactement. Un site ne doit demander <b>que les données nécessaires</b> au service. Et grâce au RGPD, tu peux demander à un site de <b>consulter, corriger ou supprimer</b> tes données.'}
+    ]},
+  { type:'choice', kicker:'Mardi, 13 h 10 – Question du professeur',
+    text:`<p>En cours, le professeur affiche quatre propositions au tableau.</p>`,
+    device: phone('🧑‍🏫 Tableau de la classe', `<div class="page"><p style="font-size:1.6rem;font-weight:800;text-align:center;letter-spacing:.2em">R G P D</p><p style="text-align:center">Que signifie ce sigle ?</p></div>`),
+    q:'Que signifie RGPD ?',
+    choices:[
+      {t:'Réseau Global de Protection Digitale', ok:'bad', priv:-5, fb:'Raté ! Ce n\'est pas un réseau, c\'est un <b>règlement</b>, c\'est-à-dire une loi.'},
+      {t:'Règlement Général sur la Protection des Données', ok:'good', priv:+10,
+       fb:'Oui ! Le <b>RGPD</b> est une <b>loi européenne</b>, en vigueur depuis 2018. En France, c\'est la <b>CNIL</b> qui veille à son respect et peut infliger de fortes amendes aux entreprises qui ne le respectent pas.', note:'3B'},
+      {t:'Registre Gouvernemental des Pirates Détectés', ok:'bad', priv:-5, fb:'Bien essayé, mais non : le RGPD ne concerne pas les pirates, il protège <b>nos données personnelles</b>.'}
+    ]}
+  ],
+  recap:['RGPD = Règlement Général sur la Protection des Données (loi européenne, 2018).','Un site doit obtenir notre consentement avant de collecter ou utiliser nos données.','Refuser les cookies doit être aussi simple qu\'accepter.','On peut demander à consulter, corriger ou supprimer ses données.']
+},
+{
+  id:'c4', icon:'💬', title:'Le groupe de classe', code:'TEMOIN', box:'Clé 4', piece:'Les comptes détournés', clue:'Avec les comptes piratés, les pirates ont publié des <b>messages humiliants</b> au nom d\'élèves. Ce sont des <b>témoins</b> qui ont fait des captures et prévenu les adultes : les comptes ont pu être bloqués.',
+  scenes:[
+  { type:'choice', kicker:'Mardi, 17 h 45',
+    text:`<p>Le groupe de discussion de la classe s'emballe. Kenzo a publié un <b>montage photo</b> d'Inès, une camarade, pour se moquer d'elle. Plusieurs élèves réagissent.</p><p>Claude n'est pas visé… mais Claude a tout vu.</p>`,
+    device: chat('💬 3e B 🔥 (28 membres)',[
+      {from:'Kenzo',text:'Regardez qui j\'ai retrouvé 🤣<span class="blur">[photo d\'Inès retouchée pour la ridiculiser]</span>',react:'😂 7 · 🔥 3'},
+      {from:'Maxime',text:'mdrrr partage-la partout'},
+      {from:'Lina',text:'euh c\'est pas cool là…'}]),
+    q:'Quelle est la première réaction de Claude ?',
+    choices:[
+      {t:'Ajouter un 😂 pour ne pas se faire remarquer.', ok:'bad', sec:-15,
+       fb:'Même un simple émoji <b>encourage</b> le harceleur et montre à Inès que « tout le monde » rit d\'elle. Liker ou partager, c\'est <b>participer</b>.'},
+      {t:'Insulter Kenzo dans le groupe pour défendre Inès.', ok:'bad', sec:-10,
+       fb:'L\'intention est bonne, mais <b>répondre avec colère</b> peut aggraver la situation : le conflit grossit et Inès est encore plus exposée. Mieux vaut prendre du recul.'},
+      {t:'Transférer le montage dans un autre groupe pour dénoncer Kenzo.', ok:'bad', sec:-15,
+       fb:'En <b>diffusant</b> le montage, Claude le montre à encore plus de monde : cela relance le conflit et blesse Inès davantage.'},
+      {t:'Ne pas réagir dans le groupe, ne rien relayer.', ok:'good', sec:+10,
+       fb:'Bon réflexe : <b>ne pas alimenter</b> le message évite l\'effet « boule de neige ». Mais rester silencieux ne suffit pas… la suite dépend de Claude.'}
+    ]},
+  { type:'choice', kicker:'Mardi, 17 h 50',
+    text:`<p>Le montage commence à circuler. Claude réfléchit à ce qui pourrait aider Inès plus tard.</p>`,
+    device: chat('💬 3e B 🔥',[{from:'Kenzo',text:'<span class="blur">[photo retouchée]</span>'},{from:'Maxime',text:'je l\'ai envoyée à la 3e A 😈'}]),
+    q:'Que fait Claude ?',
+    choices:[
+      {t:'Rien : ce ne sont pas ses affaires.', ok:'bad', sec:-10,
+       fb:'Le harcèlement continue parce que les <b>témoins se taisent</b>. Et si les messages sont supprimés, il n\'y aura plus aucune preuve.'},
+      {t:'Faire des captures d\'écran (avec le nom de l\'auteur, la date et le nom du groupe) et les garder.', ok:'good', sec:+10,
+       fb:'Très utile : les <b>captures d\'écran</b> sont des <b>preuves</b>. Elles permettront aux adultes d\'agir, même si les messages sont effacés.'}
+    ]},
+  { type:'choice', kicker:'Mardi, 20 h 30',
+    text:`<p>Inès écrit à Claude en message privé.</p>`,
+    device: chat('💬 Inès',[{from:'Inès',text:'t\'as vu le groupe… 😞'},{from:'Inès',text:'j\'ai trop honte, je veux plus aller en cours demain'},{from:'Inès',text:'dis rien à personne stp'}]),
+    q:'Que répond Claude ?',
+    choices:[
+      {t:'« Ignore-les et garde ça pour toi, ça va passer. »', ok:'bad', sec:-15,
+       fb:'<b>S\'isoler et ne pas en parler</b> n\'est jamais une bonne solution : la souffrance grandit et le harcèlement continue. Inès a besoin d\'aide.'},
+      {t:'« Bloque Kenzo et signale la photo dans l\'appli. »', ok:'mid', sec:+5,
+       fb:'C\'est une <b>bonne idée</b> : <b>bloquer</b> l\'auteur arrête ses messages et <b>signaler</b> peut faire supprimer le contenu. Mais Inès reste seule face au problème… Il manque quelque chose d\'essentiel.'},
+      {t:'« Tu n\'y es pour rien. Je suis avec toi. On en parle ensemble à un adulte de confiance demain ? »', ok:'good', sec:+10,
+       fb:'C\'est la meilleure réponse. <b>En parler à un tiers de confiance</b> (parent, CPE, professeur, infirmière…) permet de trouver des solutions. Claude peut aussi conseiller à Inès de <b>bloquer</b> Kenzo.', note:'4A'}
+    ]},
+  { type:'choice', kicker:'Mardi, 20 h 45',
+    text:`<p>Inès accepte d'en parler, mais elle a peur d'attendre jusqu'à demain. Claude cherche un numéro à appeler <b>dès maintenant</b>.</p>`,
+    device: notif('🔎 Recherche','📞','Aide aux victimes et témoins de harcèlement','Numéro national, gratuit, anonyme et confidentiel.'),
+    q:'Quel numéro composer ?',
+    choices:[
+      {t:'Le 15', ok:'bad', sec:-5, fb:'Le 15, c\'est le <b>SAMU</b>, pour les urgences médicales. Ce n\'est pas le bon numéro ici.'},
+      {t:'Le 3018', ok:'good', sec:+10,
+       fb:'Oui ! Le <b>3018</b> est le numéro national <b>gratuit, anonyme et confidentiel</b> pour les victimes et les témoins de harcèlement et de cyberharcèlement. Il peut aussi aider à <b>faire supprimer</b> des contenus en ligne.', note:'4B'},
+      {t:'Aucun : il faut régler ça entre élèves.', ok:'bad', sec:-10, fb:'Le harcèlement ne se règle pas seul. Des adultes et des professionnels sont là pour aider.'}
+    ]},
+  { type:'choice', kicker:'Mercredi, 9 h 00 – Bureau du CPE',
+    text:`<p>Inès et ses parents ont rencontré le CPE. Les parents envisagent de <b>porter plainte</b> : le cyberharcèlement est un <b>délit</b>, et même un seul partage peut être puni quand plusieurs personnes s'acharnent sur une même victime. Le CPE demande à Claude de raconter ce qui s'est passé.</p>`,
+    device: chat('🏫 Bureau du CPE',[{from:'CPE',text:'Claude, tu étais dans le groupe hier soir. Peux-tu m\'expliquer ce qui s\'est passé ?'}]),
+    q:'Que fait Claude ?',
+    choices:[
+      {t:'Dire « Je n\'ai rien vu » pour ne pas avoir d\'ennuis.', ok:'bad', sec:-10,
+       fb:'Sans témoignage, il est difficile d\'aider Inès. Témoigner, ce n\'est pas « balancer » : c\'est <b>protéger</b> une victime.'},
+      {t:'Témoigner et montrer les captures d\'écran.', ok:'good', sec:+10,
+       fb:'Bravo. Les <b>témoignages</b> et les <b>preuves</b> soutiennent la victime, notamment si elle <b>porte plainte</b> (c\'est un droit). Claude a été un témoin qui agit.'}
+    ]}
+  ],
+  recap:['Ne pas répondre avec colère et ne jamais diffuser le contenu.','Garder des preuves (captures d\'écran) et bloquer l\'auteur.','Ne pas s\'isoler : en parler à un adulte de confiance.','3018 : numéro gratuit, anonyme et confidentiel. Porter plainte est un droit.','Le témoin a un rôle important : il peut aider à arrêter le harcèlement.']
+},
+{
+  id:'c5', icon:'🩺', title:'La consultation en ligne', code:'CADENAS', box:'Clé 5', piece:'Les mots de passe en clair', clue:'L\'ancienne page de connexion du site utilisait <b>http</b>, sans cadenas : les mots de passe circulaient <b>en clair</b> sur le Wi-Fi.',
+  scenes:[
+  { type:'choice', kicker:'Mercredi, 18 h 20',
+    text:`<p>Claude a mal à la gorge. Un parent propose une <b>téléconsultation</b> avec un médecin. Le premier site trouvé demande déjà le <b>numéro de sécurité sociale</b>.</p>`,
+    device: browser('http://medi-consult-rdv.net/inscription', false, `<p style="font-weight:800;color:#2a9d8f">🩺 MédiConsult</p><p>Consultez un médecin en 5 min !</p><div class="fake-in">Nom, prénom</div><div class="fake-in">N° de sécurité sociale</div><div class="fake-in">Symptômes</div>`),
+    q:'Que fait Claude ?',
+    choices:[
+      {t:'Remplir le formulaire : c\'est urgent.', ok:'bad', priv:-15,
+       fb:'L\'adresse commence par <b>http://</b> sans cadenas : les données circulent <b>en clair</b>. Sur un Wi-Fi public, n\'importe qui sur le réseau pourrait lire le numéro de sécurité sociale et les symptômes de Claude.'},
+      {t:'Regarder d\'abord la barre d\'adresse.', ok:'good', priv:+10,
+       fb:'Bon réflexe ! <b>http://</b> sans cadenas : site <b>non sécurisé</b>. Claude cherche le site officiel… qui commence par <b>https://</b> avec un <b>cadenas</b>.'}
+    ]},
+  { type:'sort', kicker:'Mercredi, 18 h 25 – Mission « Quel protocole ? »',
+    text:`<p>Un <b>protocole</b>, c'est l'ensemble des règles qui permettent à un ordinateur et à un serveur de communiquer. Associez chaque description au bon protocole.</p>
+<div class="schema"><div>💻<br>Utilisateur</div><div class="arrows"><div>Requête →</div><div>← Réponse en clair</div></div><div>🗄️<br>Serveur</div></div>
+<div class="schema"><div>💻<br>Utilisateur</div><div class="arrows"><div>Requête →</div><div>← Certificat SSL</div><div class="red">⇄ Communication cryptée</div><div>Vérification du certificat</div></div><div>🗄️<br>Serveur</div></div>`,
+    device: browser('https://www.mediconsult.fr', true, `<p style="font-weight:800;color:#2a9d8f">🩺 MédiConsult – site officiel</p><p style="font-size:.85rem">🔒 Connexion sécurisée. Certificat valide.</p><p style="font-size:.85rem">Politique de confidentialité · Vos droits RGPD</p>`),
+    cats:['http://','https://'],
+    items:[
+      {t:'Schéma 1 : la réponse du serveur circule en clair.', a:0},
+      {t:'Schéma 2 : le serveur envoie un certificat SSL, puis la communication est cryptée.', a:1},
+      {t:'Un cadenas 🔒 apparaît dans la barre d\'adresse.', a:1},
+      {t:'Une personne sur le même Wi-Fi peut lire les données échangées.', a:0}
+    ],
+    good:'C\'est ça. Avec <b>https</b> (le « s » veut dire <i>sécurisé</i>), le serveur prouve son identité avec un <b>certificat</b> et les échanges sont <b>cryptés</b>.', note:'5A', priv:+10 },
+  { type:'multi', kicker:'Mercredi, 18 h 30 – La check-list de Claude',
+    text:`<p>Le parent de Claude hésite encore : <i>« Comment être sûr que ce site protège nos données ? »</i> Sélectionnez <b>tous</b> les bons indices à vérifier, puis validez.</p>`,
+    device: browser('https://www.mediconsult.fr/consultation', true, `<p style="font-weight:800;color:#2a9d8f">🩺 MédiConsult</p><div class="fake-in">Nom, prénom</div><div class="fake-in">N° de sécurité sociale</div><p style="font-size:.78rem;color:#666">En validant, vous acceptez notre politique de confidentialité (RGPD).</p>`),
+    items:[
+      {t:'L\'adresse commence par https://', a:true},
+      {t:'Un cadenas 🔒 est affiché dans la barre d\'adresse', a:true},
+      {t:'L\'adresse est la bonne, sans faute d\'orthographe', a:true},
+      {t:'Le site indique comment il respecte le RGPD (politique de confidentialité)', a:true},
+      {t:'Le site a un joli logo et de belles couleurs', a:false},
+      {t:'Le site affiche « 100 % sécurisé » en gros', a:false}
+    ],
+    good:'Parfait ! <b>https + cadenas + bonne adresse + respect du RGPD</b>. Attention : le cadenas prouve que la connexion est <b>cryptée</b>, pas que le site est honnête. Un faux site peut aussi avoir un cadenas ! Il faut donc aussi vérifier l\'adresse.', note:'5B', priv:+10 }
+  ],
+  recap:['Protocole : règles de communication entre un ordinateur et un serveur.','http : données en clair. https : certificat + communication cryptée.','Avant de saisir des données personnelles : https, cadenas, bonne adresse, respect du RGPD.','Le cadenas ne garantit pas qu\'un site est honnête : on vérifie aussi l\'adresse.']
+},
+{
+  id:'bonus', icon:'🎣', title:'Bonus : le mail piège', code:'HAMECON', box:'Clé bonus', bonus:true, piece:'Le coupable', clue:'Le point de départ : un faux mail « <i>URGENT ! Votre compte ENT sera supprimé</i> » envoyé à tout le collège. C\'était de l\'<b>hameçonnage</b>. Plusieurs personnes y ont tapé leur mot de passe.',
+  scenes:[
+  { type:'clues', kicker:'Mercredi, 21 h 00 – Bonus',
+    text:`<p>Dernier message de la journée… Et si c'était <b>comme ça</b> que les comptes ENT du collège avaient été piratés ?</p><p><b>Cliquez sur les 5 indices suspects</b> dans le mail.</p>`,
+    html: `<div class="device"><div class="screen"><div class="sbar"><span>21:00</span><span>📶 🔋</span></div><div class="apphead">✉️ Messagerie</div><div class="mail"><div class="meta"><b>De :</b> <span class="clue" data-i="0">support@ent-coIlege-securite.com</span><br><b>Objet :</b> <span class="clue" data-i="1">URGENT !!! Votre compte sera supprimé dans 24 h</span></div>
+<p>Cher utilisateur,</p>
+<p>Suite à l'attaque informatique, <span class="clue" data-i="2">vous devez confirmer votre mot de passe</span> pour garder votre compte ENT.</p>
+<p>Cliquez ici : <span class="clue" data-i="3">http://ent-verif-compte.xyz/login</span></p>
+<p><span class="clue" data-i="4">Merci de votre comprehension, sinon vos donées seront éffacées.</span></p>
+<p>L'équipe ENT</p></div></div></div>`,
+    clues:['L\'expéditeur est faux : « coIlege » est écrit avec un i majuscule (I) à la place du l, et ce n\'est pas l\'adresse officielle.','L\'objet joue sur l\'urgence et la peur pour empêcher de réfléchir.','Aucun service officiel ne demande jamais ton mot de passe par mail.','Le lien mène vers un site inconnu, en http (non sécurisé).','Le message contient des fautes d\'orthographe.'],
+    good:'Bien vu : c\'est de l\'<b>hameçonnage</b> (<i>phishing</i>). Le pirate se fait passer pour un service de confiance afin de voler des identifiants. C\'est très probablement ainsi que des comptes ENT du collège ont été piratés.', note:'B1', sec:+10 },
+  { type:'choice', kicker:'Mercredi, 21 h 05',
+    text:`<p>Claude a repéré le piège. Il reste à décider quoi faire de ce mail.</p>`,
+    device: mail('support@ent-coIlege-securite.com','URGENT !!! Votre compte sera supprimé dans 24 h','<p style="color:#999">…</p>'),
+    q:'Que fait Claude ?',
+    choices:[
+      {t:'Cliquer pour voir, sans rien taper.', ok:'bad', sec:-10, fb:'Même un simple clic peut confirmer au pirate que l\'adresse est active, ou lancer un téléchargement malveillant. On ne clique pas.'},
+      {t:'Répondre au pirate pour lui dire qu\'on n\'est pas dupe.', ok:'bad', sec:-10, fb:'Répondre confirme que l\'adresse est utilisée : Claude recevra encore plus de mails piégés.'},
+      {t:'Ne pas cliquer, signaler le mail comme hameçonnage, prévenir le professeur, puis le supprimer.', ok:'good', sec:+10,
+       fb:'Parfait ! Signaler permet de protéger les autres. On peut aussi transférer ce type de message à la plateforme officielle de signalement.'}
+    ]}
+  ],
+  recap:['Hameçonnage : faux message qui imite un service de confiance pour voler des informations.','Indices : expéditeur bizarre, urgence, demande de mot de passe, lien inconnu, fautes.','On ne clique pas, on ne répond pas : on signale et on prévient un adulte.']
+}
+];
+
+
+/* ---------- Infos à noter sur la fiche (carnet d'enquête) ---------- */
+const NOTES = {
+  '1A':{l:'Bonnes pratiques', t:'Télécharger sur les sites officiels. Faire les mises à jour : elles corrigent les failles.'},
+  '1B':{l:'Antivirus', t:'repère et bloque les programmes malveillants (virus, logiciels espions). Ce sont les vigiles.'},
+  '1C':{l:'Pare-feu', t:'filtre les connexions qui entrent et qui sortent. Ce sont les cadenas des portes.'},
+  '2A':{l:'Trace volontaire', t:'ce que je publie moi-même. Ex. : photos, commentaires, date de naissance.'},
+  '2B':{l:'Trace involontaire', t:'enregistrée sans que je le sache. Ex. : adresse IP, localisation, pages visitées.'},
+  '3A':{l:'Consentement', t:'un site doit me demander mon accord avant d\'utiliser mes données. Je peux refuser.'},
+  '3B':{l:'RGPD', t:'Règlement Général sur la Protection des Données : loi européenne (2018).'},
+  '4A':{l:'Cyberviolence', t:'ne pas répondre, ne pas diffuser, garder des preuves, bloquer, en parler à un adulte.'},
+  '4B':{l:'3018', t:'numéro gratuit, anonyme et confidentiel. Porter plainte est un droit.'},
+  '5A':{l:'http / https', t:'http = données en clair. https = certificat + données cryptées (cadenas).'},
+  '5B':{l:'Avant de saisir mes données', t:'je vérifie https, le cadenas et l\'adresse du site.'},
+  'B1':{l:'Hameçonnage', t:'faux message qui imite un service connu pour voler mes infos. Je ne clique pas, je signale.'}
+};
+/* ---------- État et sauvegarde ---------- */
+const KEY = 'cyber48h-v1';
+const fresh = () => ({ ch:-1, sc:0, sec:50, priv:50, done:[], errors:0, keys:[], report:false, notes:[] });
+let S = fresh();
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && typeof s.ch === 'number') S = Object.assign(fresh(), s); } catch(e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} };
+const clamp = v => Math.max(0, Math.min(100, v));
+const $ = s => document.querySelector(s);
+const main = $('#main');
+let PROF = /prof/i.test(location.hash);
+
+/* ---------- Jauges et carte ---------- */
+function gaugeColor(v){ return v>=65?'#1a7f37':v>=35?'#d08700':'#c62828'; }
+function drawTop(){
+  $('#gauges').innerHTML = [['🛡️','Sécurité',S.sec],['🔒','Vie privée',S.priv]].map(([i,l,v])=>
+    `<div class="gauge" title="${l} : ${v}/100">${i} ${l}<div class="bar"><div class="fill" style="width:${v}%;background:${gaugeColor(v)}"></div></div></div>`).join('');
+  $('#map').innerHTML = CHAPTERS.map((c,i)=>`<div class="step ${i===S.ch?'cur':''} ${S.done.includes(c.id)?'ok':''}">${S.done.includes(c.id)?'✅':c.icon} ${c.bonus?'Bonus':'Ch. '+(i+1)}</div>`).join('');
+}
+
+/* ---------- Écrans ---------- */
+function render(){
+  drawTop(); save();
+  if (S.ch < 0) return home();
+  if (S.ch >= CHAPTERS.length) return S.report ? ending() : vault();
+  const c = CHAPTERS[S.ch];
+  if (S.sc >= c.scenes.length) return chapterEnd(c);
+  const sc = c.scenes[S.sc];
+  const head = `<div class="kicker">${c.icon} ${c.bonus?'Chapitre bonus':'Chapitre '+(S.ch+1)} · ${sc.kicker||''}</div>`;
+  const dev = sc.html || sc.device || '';
+  let left = `<div class="card narr">${head}${sc.title?`<h1>${sc.title}</h1>`:''}${sc.text}`;
+  if (sc.type==='info') left += `<div class="row"><button class="btn" id="go">C'est parti ➜</button></div>`;
+  if (sc.type==='choice') left += `<div class="q">❓ ${sc.q}</div><div class="choices">${shuffleOnce(sc).map((ch,k)=>`<button class="choice" data-k="${ch._i}"><b>${'ABCD'[k]}</b>${ch.t}</button>`).join('')}</div>`;
+  if (sc.type==='sort') left += sortHTML(sc);
+  if (sc.type==='multi') left += multiHTML(sc);
+  if (sc.type==='clues') left += `<p>Indices trouvés : <span class="counter" id="cnt">0 / ${sc.clues.length}</span></p><div id="cluelist"></div><div class="row"><button class="btn ghost small" id="hint">💡 Un indice ?</button></div>`;
+  left += `</div>`;
+  main.innerHTML = `<div class="stage">${left}<div>${dev}</div></div>`;
+  bind(sc);
+}
+
+function shuffleOnce(sc){
+  if (!sc._order){ sc._order = sc.choices.map((c,i)=>i).sort(()=>Math.random()-.5); }
+  return sc._order.map(i=>Object.assign({_i:i}, sc.choices[i]));
+}
+
+function sortHTML(sc){
+  return `<div class="q">❓ Classez chaque élément</div><div class="sortlist">${sc.items.map((it,i)=>
+    `<div class="sortitem" id="si${i}"><div class="lbl">${it.t}</div><div class="opts">${sc.cats.map((c,j)=>`<button class="pill" data-i="${i}" data-j="${j}">${c}</button>`).join('')}</div></div>`).join('')}</div>
+    <div class="row"><button class="btn" id="check">Vérifier</button><span class="tip" id="msg"></span></div>`;
+}
+function multiHTML(sc){
+  return `<div class="q">❓ Sélectionnez tous les bons indices</div><div class="choices multi">${sc.items.map((it,i)=>`<button class="choice" data-i="${i}">☐ ${it.t}</button>`).join('')}</div>
+    <div class="row"><button class="btn" id="check">Valider</button><span class="tip" id="msg"></span></div>`;
+}
+
+function bind(sc){
+  if (sc.type==='info') $('#go').onclick = next;
+  if (sc.type==='choice') main.querySelectorAll('.choice').forEach(b=>b.onclick=()=>pick(sc, sc.choices[+b.dataset.k]));
+  if (sc.type==='sort'){
+    const ans = {};
+    main.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{
+      const i=+p.dataset.i; ans[i]=+p.dataset.j;
+      $('#si'+i).classList.remove('wrong','right');
+      $('#si'+i).querySelectorAll('.pill').forEach(q=>q.classList.toggle('on', q===p));
+    });
+    $('#check').onclick=()=>{
+      if (Object.keys(ans).length < sc.items.length) { $('#msg').textContent='Classez d\'abord tous les éléments.'; return; }
+      let bad=0; sc.items.forEach((it,i)=>{ const ok=ans[i]===it.a; $('#si'+i).classList.toggle('right',ok); $('#si'+i).classList.toggle('wrong',!ok); if(!ok)bad++; });
+      if (bad){ S.errors++; adj(sc, -5); $('#msg').innerHTML=`<b style="color:var(--bad)">${bad} erreur${bad>1?'s':''}</b> : corrigez les lignes en rouge.`; }
+      else success(sc);
+    };
+  }
+  if (sc.type==='multi'){
+    const sel = new Set();
+    main.querySelectorAll('.multi .choice').forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.i; sel.has(i)?sel.delete(i):sel.add(i);
+      b.classList.toggle('on', sel.has(i)); b.classList.remove('wrong','right');
+      b.innerHTML=(sel.has(i)?'☑ ':'☐ ')+sc.items[i].t;
+    });
+    $('#check').onclick=()=>{
+      let bad=0; sc.items.forEach((it,i)=>{ const b=main.querySelector(`.multi .choice[data-i="${i}"]`); const ok=sel.has(i)===it.a; if(!ok){bad++; b.classList.add('wrong');} else if(it.a) b.classList.add('right'); });
+      if (bad){ S.errors++; adj(sc,-5); $('#msg').innerHTML=`<b style="color:var(--bad)">Pas encore</b> : ${bad} élément${bad>1?'s':''} à revoir (en rouge).`; }
+      else success(sc);
+    };
+  }
+  if (sc.type==='clues'){
+    const found = new Set();
+    main.querySelectorAll('.clue').forEach(el=>el.onclick=()=>{
+      const i=+el.dataset.i; if (found.has(i)) return;
+      found.add(i); el.classList.add('found');
+      $('#cnt').textContent = `${found.size} / ${sc.clues.length}`;
+      $('#cluelist').insertAdjacentHTML('beforeend', `<div class="memo" style="margin-top:6px">🔎 ${sc.clues[i]}</div>`);
+      if (found.size===sc.clues.length) setTimeout(()=>success(sc), 500);
+    });
+    $('#hint').onclick=()=>{ main.querySelectorAll('.clue').forEach(el=>{ if(!found.has(+el.dataset.i)) el.style.background='#e3eeff'; }); };
+  }
+}
+
+function adj(o, d){ // applique un effet sur les jauges
+  const k = (o.priv!==undefined && o.sec===undefined) ? 'priv' : 'sec';
+  S[k] = clamp(S[k] + d); drawTop();
+}
+
+function pick(sc, ch){
+  const dSec = ch.sec||0, dPriv = ch.priv||0;
+  S.sec = clamp(S.sec + dSec); S.priv = clamp(S.priv + dPriv);
+  if (ch.ok==='bad') S.errors++;
+  drawTop(); save();
+  const title = ch.ok==='good' ? '✅ Bon choix !' : ch.ok==='mid' ? '🟠 Pas mal… mais incomplet' : '❌ Aïe… voici ce qui se passe';
+  const deltas = [dSec?`🛡️ Sécurité ${dSec>0?'+':''}${dSec}`:'', dPriv?`🔒 Vie privée ${dPriv>0?'+':''}${dPriv}`:''].filter(Boolean).join(' · ');
+  const note = ch.note ? noteHTML(ch.note) : '';
+  const btns = ch.ok==='good'
+    ? `<button class="btn" id="fbnext">Continuer ➜</button>`
+    : `<button class="btn" id="fbback">⏪ Remonter le temps</button>${ch.ok==='mid'?'':''}`;
+  showFB(ch.ok, title, ch.fb, deltas, note, btns);
+}
+
+function success(sc){
+  const d = sc.sec||sc.priv||0; adj(sc, d); save();
+  const deltas = sc.sec?`🛡️ Sécurité +${sc.sec}`:sc.priv?`🔒 Vie privée +${sc.priv}`:'';
+  showFB('good','✅ Mission réussie !', sc.good, deltas, sc.note?noteHTML(sc.note):'', `<button class="btn" id="fbnext">Continuer ➜</button>`);
+}
+
+function noteHTML(id){
+  const n = NOTES[id]; if (!n) return '';
+  if (!S.notes.includes(id)) { S.notes.push(id); save(); }
+  return `<div class="note"><div class="tip" style="color:#7a5a00;font-weight:700">📝 À NOTER SUR LA FICHE · CASE ${id}</div><div class="copy"><b>${n.l}</b> : ${n.t}</div></div>`;
+}
+
+function showFB(kind, title, text, deltas, note, btns){
+  $('#overlay').innerHTML = `<div class="overlay"><div class="fb ${kind}" role="dialog" aria-modal="true"><h3>${title}</h3><div>${text}</div>${deltas?`<div class="delta">${deltas}</div>`:''}${note}<div class="row">${btns}</div></div></div>`;
+  const n=$('#fbnext'), b=$('#fbback');
+  if (n) { n.onclick=()=>{ $('#overlay').innerHTML=''; next(); }; n.focus(); }
+  if (b) { b.onclick=()=>{ $('#overlay').innerHTML=''; rewind(); }; b.focus(); }
+}
+
+function rewind(){
+  main.style.transition='filter .4s'; main.style.filter='hue-rotate(180deg) blur(2px)';
+  setTimeout(()=>{ main.style.filter=''; render(); }, 380);
+}
+function next(){ S.sc++; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+function chapterEnd(c){
+  if (!S.done.includes(c.id)) S.done.push(c.id);
+  drawTop(); save();
+  const last = S.ch === CHAPTERS.length-2; // dernier chapitre avant le bonus
+  const isBonus = c.bonus;
+  main.innerHTML = `<div class="stage"><div class="card"><div class="kicker">${c.icon} ${isBonus?'Bonus':'Chapitre '+(S.ch+1)} terminé</div><h1>${c.title} ✅</h1>
+  <p>🔑 Vous avez gagné une <b>clé</b> ! Elle ouvrira la pièce « <b>${c.piece}</b> » du dossier d'enquête.</p><div class="code">${c.code}</div><p class="note">📝 <b>Fiche, case ${c.box}</b> : recopiez ce code <b>maintenant</b>. Il ne s'affichera plus : sans lui, impossible d'ouvrir le dossier !</p>
+  <div class="memo"><b>À retenir</b><ul>${c.recap.map(r=>`<li>${r}</li>`).join('')}</ul></div>
+  <div class="row">${last
+    ? `<button class="btn" id="end">🗂️ Ouvrir le dossier d'enquête ➜</button><button class="btn ghost" id="bonus">🎣 Chapitre bonus</button>`
+    : isBonus ? `<button class="btn" id="end">🗂️ Retour au dossier d'enquête ➜</button>`
+    : `<button class="btn" id="nx">Chapitre suivant ➜</button>`}</div></div>
+  <div class="card"><h2>📝 Avant de continuer</h2><p>Vérifiez avec votre binôme que les infos du chapitre et la clé sont bien recopiées sur la fiche.</p><p>Vous pouvez revoir les infos du chapitre avec le bouton <b>📒 Mes notes</b>.</p><p class="tip">Les jauges ne servent pas à noter : elles montrent l'effet de vos choix sur la sécurité et la vie privée de Claude.</p></div></div>`;
+  const nx=$('#nx'), en=$('#end'), bo=$('#bonus');
+  if (nx) nx.onclick=()=>{ S.ch++; S.sc=0; render(); };
+  if (en) en.onclick=()=>{ S.ch=CHAPTERS.length; S.report=false; render(); };
+  if (bo) bo.onclick=()=>{ S.ch=CHAPTERS.length-1; S.sc=0; render(); };
+}
+
+function home(){
+  const resume = S.done.length>0;
+  main.innerHTML = `<div class="stage"><div class="card"><div class="kicker">Technologie 3e · Séquence 6 · Activité 3</div>
+  <h1>48 h après l'attaque</h1>
+  <p>Le collège vient de subir une <b>cyberattaque</b>. Pendant 48 h, suivez <b>Claude</b>, élève de 3<sup>e</sup>, et décidez à sa place.</p>
+  <p><b>Comment jouer ?</b></p>
+  <ul><li>Lisez chaque situation <b>à deux</b> et mettez-vous d'accord avant de cliquer.</li>
+  <li>Quand le symbole <b>📝</b> apparaît, <b>recopiez l'info</b> (définition ou bonne pratique) dans la case indiquée de votre <b>fiche</b>. Vous pourrez la revoir avec le bouton <b>📒 Mes notes</b>.</li>
+  <li>À la fin de chaque chapitre, notez le <b>code</b> obtenu : ce sont les <b>clés</b> qui ouvriront le dossier d'enquête à la fin.</li>
+  <li>En cas d'erreur, vous pouvez <b>remonter le temps</b>.</li></ul>
+  <div class="row"><button class="btn" id="start">${resume?'Reprendre la partie':'Commencer'} ➜</button>${resume?'<button class="btn ghost" id="reset">Nouvelle partie</button>':''}</div></div>
+  <div class="card ${PROF?'prof':''}">${PROF?profHTML():`<h2>Le défi</h2><p>Terminez les <b>5 chapitres</b> en gardant les jauges 🛡️ et 🔒 le plus haut possible. Les binômes les plus rapides peuvent débloquer un <b>chapitre bonus</b>.</p><div class="end-codes">${CHAPTERS.map(c=>`<div>${c.icon} ${c.title}</div>`).join('')}</div>`}</div></div>`;
+  $('#start').onclick=()=>{ if (S.ch<0) S.ch=0; else if (!resume) S.ch=0; render(); };
+  if (resume) { $('#start').onclick=()=>{ S.ch = firstUndone(); S.sc=0; render(); }; $('#reset').onclick=()=>{ if(confirm('Effacer la progression et recommencer ?')){ S=fresh(); S.ch=0; render(); } }; }
+  if (PROF) bindProf();
+}
+function firstUndone(){ const i = CHAPTERS.findIndex(c=>!c.bonus && !S.done.includes(c.id)); return i<0 ? CHAPTERS.length : i; }
+
+function profHTML(){
+  return `<div class="kicker" style="color:#7c3aed">Mode professeur</div><h2>Aller directement à…</h2><div class="choices">${CHAPTERS.map((c,i)=>`<button class="choice" data-ch="${i}">${c.icon} ${c.bonus?'Bonus':'Ch. '+(i+1)} – ${c.title} <span class="tip">(code : ${c.code})</span></button>`).join('')}
+  <button class="choice" data-ch="vault">🗂️ Dossier verrouillé (saisie des codes)</button><button class="choice" data-ch="end">🏁 Rapport final (tout déverrouillé)</button><button class="choice" data-ch="reset">🔄 Remettre à zéro ce poste</button></div><p class="tip">Pour quitter le mode prof, retirez <code>#prof</code> de l'adresse ou cliquez 5 fois sur le titre.</p>`;
+}
+function bindProf(){
+  main.querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{
+    const v=b.dataset.ch;
+    if (v==='reset'){ S=fresh(); render(); return; }
+    if (v==='end'){ S.keys=CHAPTERS.map(c=>c.id); S.report=true; S.ch=CHAPTERS.length; render(); return; }
+    if (v==='vault'){ S.ch=CHAPTERS.length; S.report=false; render(); return; }
+    S.ch=+v; S.sc=0; render();
+  });
+}
+
+
+const norm = v => (v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/gi,'').toUpperCase();
+function vault(){
+  drawTop();
+  const main5 = CHAPTERS.filter(c=>!c.bonus), got = main5.filter(c=>S.keys.includes(c.id)).length;
+  const slot = (c,i) => {
+    const open = S.keys.includes(c.id);
+    return `<div class="slot ${open?'open':''}" id="slot-${c.id}">
+      <div class="slot-h">${open?'🔓':'🔒'} <b>Pièce ${c.bonus?'bonus':i+1} : ${c.piece}</b> <span class="tip">(code en case ${c.box})</span></div>
+      ${open ? `<div class="slot-c">${c.clue}</div>`
+             : `<div class="slot-in"><input type="text" autocomplete="off" spellcheck="false" placeholder="Code du ${c.bonus?'bonus':'chapitre '+(i+1)}" data-id="${c.id}"><button class="btn small" data-id="${c.id}">Déverrouiller</button></div><div class="slot-msg" id="msg-${c.id}"></div>`}
+    </div>`;
+  };
+  main.innerHTML = `<div class="stage"><div class="card"><div class="kicker">Jeudi, 8 h 00 – Salle de technologie</div>
+    <h1>🗂️ Le dossier d'enquête</h1>
+    <p>Le professeur a rassemblé les preuves de l'attaque dans un dossier <b>verrouillé</b>. Chaque code de votre fiche ouvre une pièce. Avec les <b>5 pièces</b>, vous découvrirez comment le collège a été piraté.</p>
+    <div class="slots">${CHAPTERS.map(slot).join('')}</div></div>
+    <div class="card"><h2>Progression</h2><div class="locks">${main5.map(c=>`<span class="${S.keys.includes(c.id)?'on':''}">${S.keys.includes(c.id)?'🔓':'🔒'}</span>`).join('')}</div>
+    <p style="text-align:center"><b>${got} / 5</b> pièces ouvertes</p>
+    ${got===5 ? `<div class="row" style="justify-content:center"><button class="btn" id="report">📄 Lire le rapport d'enquête ➜</button></div>`
+              : `<p class="tip">Un code manque ? Il est sur votre fiche, dans la case indiquée. Si vous ne l'avez pas noté, demandez au professeur.</p>`}
+    ${S.done.includes('bonus')||S.keys.includes('bonus') ? '' : `<p class="tip">La pièce bonus s'obtient en jouant le chapitre bonus.</p><div class="row"><button class="btn ghost small" id="bonus">🎣 Jouer le chapitre bonus</button></div>`}</div></div>`;
+  const tryOpen = id => {
+    const c = CHAPTERS.find(x=>x.id===id), inp = main.querySelector(`input[data-id="${id}"]`);
+    if (norm(inp.value) === norm(c.code)) { S.keys.push(id); save(); vault(); const el=$('#slot-'+id); if(el){ el.classList.add('flash'); } }
+    else { S.errors++; save(); const m=$('#msg-'+id); m.textContent = inp.value.trim() ? '❌ Code incorrect. Vérifiez la case '+c.box+' de votre fiche.' : 'Tapez le code noté sur votre fiche.'; const sl=$('#slot-'+id); sl.classList.remove('shake'); void sl.offsetWidth; sl.classList.add('shake'); }
+  };
+  main.querySelectorAll('.slot-in button').forEach(b=>b.onclick=()=>tryOpen(b.dataset.id));
+  main.querySelectorAll('.slot-in input').forEach(i=>i.onkeydown=e=>{ if(e.key==='Enter') tryOpen(i.dataset.id); });
+  const r=$('#report'); if (r) r.onclick=()=>{ S.report=true; render(); };
+  const bo=$('#bonus'); if (bo) bo.onclick=()=>{ S.ch=CHAPTERS.length-1; S.sc=0; render(); };
+}
+
+function ending(){
+  const score = Math.round((S.sec+S.priv)/2);
+  const lvl = score>=75?['🏆','Expert·e en cybersécurité']:score>=55?['🥈','Bon réflexes, encore quelques pièges']:['🧩','Apprenti·e : rejouez les chapitres difficiles'];
+  main.innerHTML = `<div class="stage"><div class="card"><div class="kicker">Jeudi, 8 h 05 – Retour en technologie</div><h1>Rapport d'enquête ${lvl[0]}</h1>
+  <p>Dossier complet ! Voici comment l'attaque a réussi :</p>
+  <ol class="story">${(S.keys.includes('bonus')?[CHAPTERS.find(c=>c.bonus)]:[]).concat(CHAPTERS.filter(c=>!c.bonus)).map(c=>`<li><b>${c.piece}.</b> ${c.clue}</li>`).join('')}</ol>
+  ${S.keys.includes('bonus')?'':'<p class="tip">🕵️ Il manque une pièce : <b>le coupable</b>. Jouez le chapitre bonus pour savoir comment tout a commencé.</p>'}
+  <p><b>Conclusion :</b> aucune de ces erreurs n'était grave toute seule. C'est leur <b>accumulation</b> qui a ouvert la porte aux pirates. La cybersécurité, c'est l'affaire de <b>tout le monde</b>.</p>
+  <p>Votre niveau : <b>${lvl[1]}</b><br>🛡️ Sécurité : <b>${S.sec}/100</b> · 🔒 Vie privée : <b>${S.priv}/100</b> · Retours en arrière : <b>${S.errors}</b></p>
+  <div class="row"><button class="btn ghost" id="replay">Rejouer depuis le début</button>${S.keys.includes('bonus')?'':'<button class="btn ghost" id="bonus">🎣 Chapitre bonus</button>'}<button class="btn ghost" id="dossier">🗂️ Revoir le dossier</button></div></div>
+  <div class="card"><h2>📝 Dernière étape</h2><p>Sur la fiche, complétez la partie <b>« Je prépare ma trace écrite »</b>, puis recopiez le bilan dans votre <b>cahier</b>.</p><p>Il doit répondre à la question :<br><i>Quelles bonnes pratiques adopter sur Internet pour assurer une bonne sécurité numérique ?</i></p><p class="tip">Besoin d'aide ou envie d'en parler ? <b>3018</b>, gratuit, anonyme et confidentiel.</p></div></div>`;
+  $('#replay').onclick=()=>{ if(confirm('Recommencer depuis le début ?')){ S=fresh(); S.ch=0; render(); } };
+  const bo=$('#bonus'); if (bo) bo.onclick=()=>{ S.ch=CHAPTERS.length-1; S.sc=0; S.report=false; render(); };
+  $('#dossier').onclick=()=>{ S.report=false; render(); };
+}
+
+
+$('#carnet').onclick=()=>{
+  const ids = Object.keys(NOTES).filter(k=>S.notes.includes(k));
+  $('#overlay').innerHTML = `<div class="overlay"><div class="fb" role="dialog" aria-modal="true" style="border-top-color:#e0b400"><h3>📒 Mes notes</h3>
+  ${ids.length ? ids.map(k=>`<div class="copy" style="margin:6px 0"><span class="tag">${k}</span> <b>${NOTES[k].l}</b> : ${NOTES[k].t}</div>`).join('') : '<p>Aucune info pour l\'instant. Elles apparaîtront au fil de l\'enquête.</p>'}
+  <p class="tip">Les clés des chapitres ne sont pas dans le carnet : elles ne s'affichent qu'une fois.</p><div class="row"><button class="btn" id="cclose">Fermer</button></div></div></div>`;
+  $('#cclose').onclick=()=>{ $('#overlay').innerHTML=''; };
+};
+/* ---------- Mode prof : 5 clics sur le titre ---------- */
+let clicks=0, ct;
+$('#logo').addEventListener('click',()=>{ clicks++; clearTimeout(ct); ct=setTimeout(()=>clicks=0,1500);
+  if (clicks>=5){ clicks=0; PROF=!PROF; location.hash = PROF?'prof':''; S.ch=-1; render(); }});
+window.addEventListener('hashchange',()=>{ PROF=/prof/i.test(location.hash); if (S.ch<0) render(); });
+
+render();
+</script>
+</body>
+</html>
